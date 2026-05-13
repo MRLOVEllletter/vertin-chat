@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { ChatBubble } from '../components/ChatBubble'
 import { VoiceRecorder } from '../components/VoiceRecorder'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
-import { transcribeAudio, chatWithAI, synthesizeTTS, fetchTtsBlob } from '../api'
+import { transcribeAudio, chatWithAI, synthesizeTTS } from '../api'
 import type { Message } from '../types'
 
 interface ChatPageProps {
@@ -15,25 +15,16 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const playAudio = useCallback((audioUrl: string, index: number) => {
+  const playAudio = useCallback((base64: string, index: number) => {
     setPlayingIndex(index)
-    if (audioRef.current) {
-      audioRef.current.pause()
-      URL.revokeObjectURL(audioRef.current.src)
-    }
-    const audio = new Audio(audioUrl)
-    audioRef.current = audio
-    audio.onended = () => {
-      setPlayingIndex(null)
-      URL.revokeObjectURL(audioUrl)
-    }
+    const audio = new Audio(`data:audio/wav;base64,${base64}`)
+    audio.onended = () => setPlayingIndex(null)
     audio.play()
   }, [])
 
@@ -68,13 +59,12 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
         })
         const reply = chatResult.reply
 
-        // 3. TTS - fetch as blob URL for reliable playback
-        const ttsBlob = await fetchTtsBlob(reply)
-        const audioUrl = URL.createObjectURL(ttsBlob)
+        // 3. TTS
+        const ttsResult = await synthesizeTTS(reply)
         setMessages((prev) => [...prev, {
           role: 'assistant',
           content: reply,
-          audioBase64: audioUrl,
+          audioBase64: ttsResult.audio_base64,
         }])
       } catch (e) {
         console.error('Processing failed:', e)

@@ -46,9 +46,3 @@ export async function synthesizeTTS(text: string): Promise<{ audio_base64: strin
   if (!res.ok) throw new Error('TTS failed')
   return res.json()
 }
-
-export async function fetchTtsBlob(text: string): Promise<Blob> {
-  const res = await fetch(`${API_BASE}/api/tts/stream?text=${encodeURIComponent(text)}`)
-  if (!res.ok) throw new Error('TTS stream failed')
-  return res.blob()
-}
