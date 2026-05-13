@@ -2,28 +2,22 @@
 title Vertin English Tutor
 
 echo ========================================
-echo    Vertin English Tutor - One Click Start
+echo    Vertin English Tutor
 echo ========================================
 echo.
 
-REM Get script directory
-set "PROJECT_DIR=%~dp0"
-
-REM Step 1: GPT-SoVITS (Vertin Voice)
 echo [1/3] Starting Vertin voice service (GPT-SoVITS)...
-start "GPT-SoVITS" /min cmd /c "cd /d "%PROJECT_DIR%GPT-SoVITS" && python api.py -s "GPT_SoVITS/pretrained_models/vertin/Vertin_e2_s154_l32.pth" -g "GPT_SoVITS/pretrained_models/vertin/Vertin-e10.ckpt" -d cuda -p 9880 -hp -dr e1.wav -dt "Are you still allow a point of contact for the Foundation, Madam Z?" -dl en"
+start "GPT-SoVITS" /min cmd /c "D:\我的项目\MyVertinChat\start_tts.bat"
 echo   Model: Vertin V4 | GPU: Half Precision
 echo   Waiting 30s for model to load...
 ping 127.0.0.1 -n 30 >nul
 
-REM Step 2: Backend FastAPI
 echo [2/3] Starting backend server...
-start "Backend" /min cmd /c "cd /d "%PROJECT_DIR%" && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8765"
+start "Backend" /min cmd /c "cd /d D:\我的项目\MyVertinChat && python -m uvicorn backend.main:app --host 0.0.0.0 --port 8765"
 ping 127.0.0.1 -n 3 >nul
 
-REM Step 3: Frontend
 echo [3/3] Starting frontend...
-start "Frontend" /min cmd /c "cd /d "%PROJECT_DIR%frontend" && npm run dev"
+start "Frontend" /min cmd /c "cd /d D:\我的项目\MyVertinChat\frontend && npm run dev"
 ping 127.0.0.1 -n 5 >nul
 
 echo.
