@@ -37,7 +37,7 @@ export async function chatWithAI(
   return res.json()
 }
 
-export async function synthesizeTTS(text: string): Promise<{ audio_base64: string; duration_ms: number }> {
+export async function synthesizeTTS(text: string): Promise<{ audio_url: string; duration_ms: number }> {
   const res = await fetch(`${API_BASE}/api/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
