@@ -21,10 +21,13 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const playAudio = useCallback((base64: string, index: number) => {
+  const playAudio = useCallback((url: string, index: number) => {
     setPlayingIndex(index)
-    const audio = new Audio(`data:audio/wav;base64,${base64}`)
-    audio.onended = () => setPlayingIndex(null)
+    const audio = new Audio(url)
+    audio.onended = () => {
+      setPlayingIndex(null)
+      URL.revokeObjectURL(url)
+    }
     audio.play()
   }, [])
 
@@ -59,12 +62,17 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
         })
         const reply = chatResult.reply
 
-        // 3. TTS
+        // 3. TTS - convert base64 to blob URL for reliable playback
         const ttsResult = await synthesizeTTS(reply)
+        const binaryStr = atob(ttsResult.audio_base64)
+        const bytes = new Uint8Array(binaryStr.length)
+        for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
+        const blob = new Blob([bytes], { type: 'audio/wav' })
+        const audioUrl = URL.createObjectURL(blob)
         setMessages((prev) => [...prev, {
           role: 'assistant',
           content: reply,
-          audioBase64: ttsResult.audio_base64,
+          audioBase64: audioUrl,
         }])
       } catch (e) {
         console.error('Processing failed:', e)
