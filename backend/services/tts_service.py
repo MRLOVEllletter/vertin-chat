@@ -3,9 +3,9 @@ import json
 import os
 import re
 import uuid
-import time
 from datetime import datetime
 import wave
+import numpy as np
 import httpx
 from backend.config import settings
 
@@ -18,7 +18,8 @@ REF_WAV_PATH = "e1.wav"
 PROMPT_TEXT = "Are you still allow a point of contact for the Foundation, Madam Z?"
 PROMPT_LANG = "en"
 
-SILENCE_GAP_MS = 80  # small gap between concatenated chunks
+TRIM_START_MS = 50      # remove garbled warm-up at start of each chunk
+SILENCE_GAP_MS = 60     # small gap between chunks
 
 
 def log_tts(text: str, audio_bytes: bytes, duration_ms: int, status: str = "ok", error: str = ""):
@@ -39,7 +40,6 @@ def log_tts(text: str, audio_bytes: bytes, duration_ms: int, status: str = "ok",
 
 
 def split_sentences(text: str) -> list[str]:
-    """Split text into short chunks for TTS."""
     parts = re.split(r"(?<=[.!?])\s+", text.strip())
     result = []
     for p in parts:
@@ -54,25 +54,29 @@ def split_sentences(text: str) -> list[str]:
     return result
 
 
-def extract_samples(wav_bytes: bytes) -> tuple[int, int, int, bytes]:
-    """Extract raw PCM samples from a WAV file.
-    Returns (sample_rate, channels, sample_width, raw_pcm_data)."""
+def read_wav(wav_bytes: bytes) -> tuple[int, int, int, np.ndarray]:
+    """Read WAV into (sample_rate, channels, sample_width, samples_float32)."""
     with wave.open(io.BytesIO(wav_bytes), "rb") as w:
         sr = w.getframerate()
         channels = w.getnchannels()
         sw = w.getsampwidth()
-        data = w.readframes(w.getnframes())
-    return sr, channels, sw, data
+        raw = w.readframes(w.getnframes())
+    samples = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+    if channels == 2:
+        samples = samples.reshape(-1, 2).mean(axis=1)
+    return sr, channels, sw, samples
 
 
-def build_wav(samples: bytes, sr: int, channels: int, sw: int) -> bytes:
-    """Build a WAV file from raw PCM data."""
+def write_wav(samples: np.ndarray, sr: int, sw: int = 2) -> bytes:
+    """Write float32 samples to mono 16-bit WAV bytes."""
+    clipped = np.clip(samples, -1.0, 1.0)
+    int16 = (clipped * 32767).astype(np.int16)
     buf = io.BytesIO()
     with wave.open(buf, "wb") as w:
-        w.setnchannels(channels)
+        w.setnchannels(1)
         w.setsampwidth(sw)
         w.setframerate(sr)
-        w.writeframes(samples)
+        w.writeframes(int16.tobytes())
     return buf.getvalue()
 
 
@@ -82,10 +86,10 @@ async def synthesize(text: str, speed: float = 1.0) -> tuple[str, int]:
         return "", 0
 
     async with httpx.AsyncClient(timeout=60) as client:
-        all_chunks = []
-        sr, channels, sw = 48000, 1, 2  # expected format
+        all_samples: list[np.ndarray] = []
+        target_sr = 48000
 
-        for i, chunk in enumerate(chunks):
+        for chunk in chunks:
             params = {
                 "text": chunk,
                 "text_language": "en",
@@ -99,30 +103,35 @@ async def synthesize(text: str, speed: float = 1.0) -> tuple[str, int]:
                 resp = await client.get(f"{settings.gpt_sovits_url}/", params=params)
                 resp.raise_for_status()
 
-                chunk_sr, chunk_ch, chunk_sw, data = extract_samples(resp.content)
-                # Use first chunk's format as reference
-                if i == 0:
-                    sr, channels, sw = chunk_sr, chunk_ch, chunk_sw
+                sr, _, _, samples = read_wav(resp.content)
+                target_sr = sr
 
-                # Add silence gap between chunks
-                if i > 0 and all_chunks:
-                    gap_frames = int(sr * SILENCE_GAP_MS / 1000)
-                    gap = b"\x00\x00" * gap_frames  # 16-bit silence
-                    all_chunks.append(gap)
+                # Trim warm-up from start of this chunk
+                trim_frames = int(sr * TRIM_START_MS / 1000)
+                if len(samples) > trim_frames:
+                    samples = samples[trim_frames:]
 
-                all_chunks.append(data)
+                # Skip if nothing left
+                if len(samples) < int(sr * 0.05):
+                    continue
+
+                if all_samples:
+                    # Add small silence gap
+                    gap = np.zeros(int(sr * SILENCE_GAP_MS / 1000))
+                    all_samples.append(gap)
+
+                all_samples.append(samples)
 
             except Exception as e:
-                print(f"TTS chunk {i} failed: {e}")
+                print(f"TTS chunk failed: {e}")
 
-        if not all_chunks:
+        if not all_samples:
             return "", 0
 
-        combined_data = b"".join(all_chunks)
-        wav_bytes = build_wav(combined_data, sr, channels, sw)
+        combined = np.concatenate(all_samples)
+        wav_bytes = write_wav(combined, target_sr)
 
-        # Log and save
-        duration_ms = int(len(combined_data) / (sw * channels) / sr * 1000)
+        duration_ms = int(len(combined) / target_sr * 1000)
         log_tts(text, wav_bytes, duration_ms)
 
         file_id = uuid.uuid4().hex[:12]
