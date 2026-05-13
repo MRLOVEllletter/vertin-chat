@@ -7,3 +7,6 @@ temp_audio/
 conversation_history/
 gpt_sovits_models/
 gpt_sovits_data/
+Vertin_model/
+*.ckpt
+*.pth

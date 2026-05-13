@@ -6,8 +6,9 @@ services:
     ports:
       - "9880:9880"
     volumes:
-      - ./gpt_sovits_models:/workspace/pretrained_models
-      - ./gpt_sovits_data:/workspace/data
+      - ./gpt_sovits_models/GPT_weights_v2:/workspace/GPT_weights_v2
+      - ./gpt_sovits_models/SoVITS_weights_v2:/workspace/SoVITS_weights_v2
+      - ./gpt_sovits_models/reference:/workspace/reference
     environment:
       - CUDA_VISIBLE_DEVICES=0
     deploy:
@@ -17,4 +18,5 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-    command: ["python", "api_v2.py"]
+    command: >
+      sh -c "python api_v2.py -a 0.0.0.0 -p 9880"
