@@ -82,8 +82,8 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-zinc-500 mt-20">
-            <p className="text-lg">Press and hold the microphone to speak</p>
-            <p className="text-sm mt-2">I'll help you practice your English</p>
+            <p className="text-lg">按住麦克风开始说话</p>
+            <p className="text-sm mt-2">我来帮你练习英语口语</p>
           </div>
         )}
         {messages.map((msg, i) => (

@@ -12,12 +12,12 @@ function App() {
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <header className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-zinc-100">Vertin · English Tutor</h1>
+        <h1 className="text-lg font-semibold text-zinc-100">维尔汀 · 英语口语陪练</h1>
         <button
           onClick={() => setShowSettings(!showSettings)}
           className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
         >
-          {showSettings ? 'Close' : 'Settings'}
+          {showSettings ? '关闭' : '设置'}
         </button>
       </header>
 

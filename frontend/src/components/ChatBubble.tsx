@@ -28,7 +28,7 @@ export function ChatBubble({ role, content, onPlay, isPlaying }: ChatBubbleProps
             onClick={onPlay}
             className="mt-2 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
           >
-            {isPlaying ? 'Playing...' : 'Play'}
+            {isPlaying ? '播放中...' : '播放'}
           </button>
         )}
       </div>
