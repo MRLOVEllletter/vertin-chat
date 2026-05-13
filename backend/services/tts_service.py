@@ -14,6 +14,7 @@ os.makedirs(AUDIO_DIR, exist_ok=True)
 REF_WAV_PATH = "e1.wav"
 PROMPT_TEXT = "Are you still allow a point of contact for the Foundation, Madam Z?"
 PROMPT_LANG = "en"
+PREFIX_TEXT = "Um, let me see. "  # sacrificial prefix absorbed by model warm-up (~300ms)
 
 
 def log_tts(text: str, audio_bytes: bytes, duration_ms: int, status: str = "ok", error: str = ""):
@@ -35,13 +36,16 @@ def log_tts(text: str, audio_bytes: bytes, duration_ms: int, status: str = "ok",
 
 async def synthesize(text: str, speed: float = 1.0) -> tuple[str, int]:
     params = {
-        "text": text,
+        "text": PREFIX_TEXT + text,
         "text_language": "en",
         "refer_wav_path": REF_WAV_PATH,
         "prompt_text": PROMPT_TEXT,
         "prompt_language": PROMPT_LANG,
         "speed": speed,
         "media_type": "wav",
+        "top_k": 5,
+        "top_p": 1.0,
+        "temperature": 1.0,
     }
     async with httpx.AsyncClient(timeout=60) as client:
         try:
