@@ -10,3 +10,5 @@ gpt_sovits_data/
 Vertin_model/
 *.ckpt
 *.pth
+GPT-SoVITS/
+test_vertin.wav
