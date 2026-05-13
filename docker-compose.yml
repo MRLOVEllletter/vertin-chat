@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  gpt-sovits:
+    image: breakstring/gpt-sovits:latest
+    ports:
+      - "9880:9880"
+    volumes:
+      - ./gpt_sovits_models:/workspace/pretrained_models
+      - ./gpt_sovits_data:/workspace/data
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command: ["python", "api_v2.py"]
