@@ -52,6 +52,8 @@ async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[st
         duration_ms = int((time.time() - t0) * 1000)
         text = data["results"]["channels"][0]["alternatives"][0]["transcript"]
         detected_lang = data["results"]["channels"][0].get("detected_language", "en")
+        if not text:
+            print(f"[Deepgram DEBUG] lang={language} audio_bytes={len(audio_bytes)} resp={data}")
         return text, detected_lang, duration_ms
 
 
