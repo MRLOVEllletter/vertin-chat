@@ -89,24 +89,33 @@ function MainLayout() {
           />
         </div>
 
-        {/* Mobile sidebar — slide-in overlay */}
-        {sidebarOpen && (
-          <div className="md:hidden fixed inset-0 z-50">
-            <div
-              className="absolute inset-0 bg-black/50"
-              onClick={closeSidebar}
+        {/* Mobile sidebar — always rendered, toggled via CSS for reliable touch events */}
+        <div
+          className={`md:hidden fixed inset-0 z-50 transition-colors duration-200 ${
+            sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none'
+          }`}
+        >
+          <div
+            className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${
+              sidebarOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+            onClick={closeSidebar}
+          />
+          <div
+            className={`absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] transition-transform duration-200 ease-out ${
+              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            style={{ touchAction: 'manipulation' }}
+          >
+            <Sidebar
+              activeConvId={activeConvId}
+              activeBotId={convBotId}
+              onSelectConv={handleSelectConv}
+              onNewConv={handleNewConv}
+              onClose={closeSidebar}
             />
-            <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] animate-slide-in">
-              <Sidebar
-                activeConvId={activeConvId}
-                activeBotId={convBotId}
-                onSelectConv={handleSelectConv}
-                onNewConv={handleNewConv}
-                onClose={closeSidebar}
-              />
-            </div>
           </div>
-        )}
+        </div>
 
         {/* Main content area */}
         <div className="flex-1 flex overflow-hidden">
@@ -122,9 +131,12 @@ function MainLayout() {
             </aside>
           )}
 
-          {/* Mobile settings — fullscreen overlay */}
-          {showSettings && (
-            <div className="md:hidden fixed inset-0 z-50 bg-zinc-950 flex flex-col">
+          {/* Mobile settings — always rendered, toggled via CSS */}
+          <div
+            className={`md:hidden fixed inset-0 z-50 bg-zinc-950 flex flex-col transition-opacity duration-200 ${
+              showSettings ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+            }`}
+          >
               <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
                 <h2 className="text-lg font-semibold text-zinc-100">设置</h2>
                 <button
@@ -143,7 +155,6 @@ function MainLayout() {
                 />
               </div>
             </div>
-          )}
 
           <div className="flex-1 overflow-auto">
             <Outlet context={{ activeConvId, convBotId, systemPrompt, difficulty }} />
