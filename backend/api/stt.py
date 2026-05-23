@@ -9,13 +9,13 @@ router = APIRouter()
 
 
 @router.post("/stt", response_model=STTResponse)
-async def speech_to_text(file: UploadFile = File(...)):
+async def speech_to_text(file: UploadFile = File(...), language: str = "en"):
     ext = os.path.splitext(file.filename or "audio.wav")[1] or ".wav"
     temp_path = os.path.join(settings.stt_temp_dir, f"{uuid.uuid4()}{ext}")
     with open(temp_path, "wb") as f:
         f.write(await file.read())
     try:
-        text, lang, duration_ms = await transcribe(temp_path)
+        text, lang, duration_ms = await transcribe(temp_path, language=language)
         return STTResponse(text=text, language=lang, duration_ms=duration_ms)
     finally:
         os.remove(temp_path)

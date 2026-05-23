@@ -20,6 +20,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
   const [messages, setMessages] = useState<Message[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
+  const [language, setLanguage] = useState<'en' | 'zh'>('en')
   const [botPrompt, setBotPrompt] = useState('')
   const [botName, setBotName] = useState('Vertin')
   const [currentConvId, setCurrentConvId] = useState<number | null>(convId)
@@ -102,7 +103,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
 
       try {
         // 1. STT
-        const sttResult = await transcribeAudio(audioBlob)
+        const sttResult = await transcribeAudio(audioBlob, language)
         const userText = sttResult.text
 
         // 2. Create conversation if needed
@@ -189,6 +190,14 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
       </div>
 
       <div className="border-t border-zinc-800 p-4 flex justify-center items-center gap-4">
+        <button
+          onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
+          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            language === 'zh' ? 'bg-red-600/20 text-red-300 border border-red-600/40' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
+          }`}
+        >
+          {language === 'en' ? 'EN' : '中文'}
+        </button>
         <VoiceRecorder
           isRecording={isRecording}
           isProcessing={isProcessing}

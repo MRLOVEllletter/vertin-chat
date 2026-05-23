@@ -30,7 +30,7 @@ async def transcribe_whisper(audio_path: str) -> tuple[str, str, int]:
         return text, info.language, duration_ms
 
 
-async def transcribe_deepgram(audio_path: str) -> tuple[str, str, int]:
+async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[str, str, int]:
     with open(audio_path, "rb") as f:
         audio_bytes = f.read()
 
@@ -41,7 +41,7 @@ async def transcribe_deepgram(audio_path: str) -> tuple[str, str, int]:
             params={
                 "model": settings.deepgram_model,
                 "smart_format": "true",
-                "detect_language": "true",
+                "language": language,
                 "keyterm": "Vertin:0.7",
             },
             headers={"Authorization": f"Token {settings.deepgram_api_key}", "Content-Type": "audio/wav"},
@@ -55,7 +55,7 @@ async def transcribe_deepgram(audio_path: str) -> tuple[str, str, int]:
         return text, detected_lang, duration_ms
 
 
-async def transcribe(audio_path: str) -> tuple[str, str, int]:
+async def transcribe(audio_path: str, language: str = "en") -> tuple[str, str, int]:
     if settings.stt_provider == "deepgram" and settings.deepgram_api_key:
-        return await transcribe_deepgram(audio_path)
+        return await transcribe_deepgram(audio_path, language)
     return await transcribe_whisper(audio_path)

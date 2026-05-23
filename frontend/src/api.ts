@@ -39,10 +39,10 @@ export async function healthCheck(): Promise<boolean> {
 }
 
 // ---- STT ----
-export async function transcribeAudio(audioBlob: Blob): Promise<{ text: string }> {
+export async function transcribeAudio(audioBlob: Blob, language: string = 'en'): Promise<{ text: string }> {
   const form = new FormData()
   form.append('file', audioBlob, 'audio.wav')
-  const res = await api.fetch('/api/stt', { method: 'POST', body: form })
+  const res = await api.fetch(`/api/stt?language=${language}`, { method: 'POST', body: form })
   if (!res.ok) throw new Error('STT failed')
   return res.json()
 }
