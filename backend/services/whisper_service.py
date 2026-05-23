@@ -34,6 +34,8 @@ async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[st
     with open(audio_path, "rb") as f:
         audio_bytes = f.read()
 
+    print(f"[STT] lang={language} audio_bytes={len(audio_bytes)}")
+
     t0 = time.time()
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
@@ -47,13 +49,13 @@ async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[st
             headers={"Authorization": f"Token {settings.deepgram_api_key}", "Content-Type": "audio/wav"},
             content=audio_bytes,
         )
+        print(f"[STT] status={resp.status_code}")
         resp.raise_for_status()
         data = resp.json()
         duration_ms = int((time.time() - t0) * 1000)
         text = data["results"]["channels"][0]["alternatives"][0]["transcript"]
         detected_lang = data["results"]["channels"][0].get("detected_language", "en")
-        if not text:
-            print(f"[Deepgram DEBUG] lang={language} audio_bytes={len(audio_bytes)} resp={data}")
+        print(f"[STT] text='{text[:80]}' lang={detected_lang}")
         return text, detected_lang, duration_ms
 
 

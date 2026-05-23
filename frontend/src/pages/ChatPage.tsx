@@ -103,8 +103,10 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
 
       try {
         // 1. STT
+        console.log('[STT] sending audio, lang:', language, 'blob size:', audioBlob.size)
         const sttResult = await transcribeAudio(audioBlob, language)
         const userText = sttResult.text
+        console.log('[STT] result:', userText)
 
         // 2. Create conversation if needed
         if (!conv) {
