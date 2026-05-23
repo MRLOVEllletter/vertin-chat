@@ -24,6 +24,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
   const [botPrompt, setBotPrompt] = useState('')
   const [botName, setBotName] = useState('Vertin')
   const [currentConvId, setCurrentConvId] = useState<number | null>(convId)
+  const [textInput, setTextInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder()
 
@@ -93,64 +94,72 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
     })
   }
 
-  // Process audio when blob is available after recording stops
+  // Shared logic: send user text through LLM → TTS, persist messages
+  const processUserInput = useCallback(async (userText: string) => {
+    setIsProcessing(true)
+    let conv = currentConvId
+
+    try {
+      // Create conversation if needed
+      if (!conv) {
+        const cres = await api.fetch('/api/conversations', {
+          method: 'POST',
+          body: JSON.stringify({ bot_id: ctx.convBotId, title: userText.slice(0, 50) }),
+        })
+        if (cres.ok) {
+          const cdata = await cres.json()
+          conv = cdata.id
+          setCurrentConvId(conv)
+        }
+      }
+
+      if (conv) await saveMessage(conv, 'user', userText).catch(() => {})
+
+      setMessages((prev) => [...prev, { role: 'user', content: userText }])
+
+      // Chat
+      const history = messages.map((m) => ({ role: m.role, content: m.content }))
+      history.push({ role: 'user', content: userText })
+
+      const chatResult = await chatWithAI(userText, history, {
+        systemPrompt: botPrompt || undefined,
+        difficulty: 'intermediate',
+        conversationId: conv || undefined,
+      })
+      const reply = chatResult.reply
+
+      // TTS
+      const ttsResult = await synthesizeTTS(reply)
+
+      if (conv) await saveMessage(conv, 'assistant', reply, ttsResult.audio_url).catch(() => {})
+
+      setMessages((prev) => [...prev, {
+        role: 'assistant',
+        content: reply,
+        audioBase64: ttsResult.audio_url,
+      }])
+    } catch (e) {
+      console.error('Processing failed:', e)
+    } finally {
+      setIsProcessing(false)
+    }
+  }, [currentConvId, ctx.convBotId, messages, botPrompt])
+
+  // Process audio when blob is available after recording stops (English mode)
   useEffect(() => {
     if (!audioBlob || isRecording || isProcessing) return
 
     const processAudio = async () => {
-      setIsProcessing(true)
-      let conv = currentConvId
-
       try {
-        // 1. STT
         console.log('[STT] sending audio, lang:', language, 'blob size:', audioBlob.size)
         const sttResult = await transcribeAudio(audioBlob, language)
         const userText = sttResult.text
         console.log('[STT] result:', userText)
-
-        // 2. Create conversation if needed
-        if (!conv) {
-          const cres = await api.fetch('/api/conversations', {
-            method: 'POST',
-            body: JSON.stringify({ bot_id: ctx.convBotId, title: userText.slice(0, 50) }),
-          })
-          if (cres.ok) {
-            const cdata = await cres.json()
-            conv = cdata.id
-            setCurrentConvId(conv)
-          }
-        }
-
-        // Persist user message
-        if (conv) await saveMessage(conv, 'user', userText).catch(() => {})
-
-        setMessages((prev) => [...prev, { role: 'user', content: userText }])
-
-        // 3. Chat
-        const history = messages.map((m) => ({ role: m.role, content: m.content }))
-        history.push({ role: 'user', content: userText })
-
-        const chatResult = await chatWithAI(userText, history, {
-          systemPrompt: botPrompt || undefined,
-          difficulty: 'intermediate',
-          conversationId: conv || undefined,
-        })
-        const reply = chatResult.reply
-
-        // 4. TTS
-        const ttsResult = await synthesizeTTS(reply)
-
-        // Persist assistant message
-        if (conv) await saveMessage(conv, 'assistant', reply, ttsResult.audio_url).catch(() => {})
-
-        setMessages((prev) => [...prev, {
-          role: 'assistant',
-          content: reply,
-          audioBase64: ttsResult.audio_url,
-        }])
+        if (!userText.trim()) return
+        clearAudio()
+        await processUserInput(userText)
       } catch (e) {
-        console.error('Processing failed:', e)
-      } finally {
+        console.error('STT failed:', e)
         setIsProcessing(false)
         clearAudio()
       }
@@ -159,13 +168,23 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
     processAudio()
   }, [audioBlob, isRecording, isProcessing])  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Text input submit (Chinese mode)
+  const handleTextSubmit = useCallback(async () => {
+    const text = textInput.trim()
+    if (!text || isProcessing) return
+    setTextInput('')
+    await processUserInput(text)
+  }, [textInput, isProcessing, processUserInput])
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-zinc-500 mt-20">
             <p className="text-lg">和 {botName} 开始对话</p>
-            <p className="text-sm mt-2">按住麦克风开始说话</p>
+            <p className="text-sm mt-2">
+              {language === 'zh' ? '输入文字并发送' : '按住麦克风开始说话'}
+            </p>
           </div>
         )}
         {messages.map((msg, i) => (
@@ -200,12 +219,35 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
         >
           {language === 'en' ? 'EN' : '中文'}
         </button>
-        <VoiceRecorder
-          isRecording={isRecording}
-          isProcessing={isProcessing}
-          onStart={handleStartRecording}
-          onStop={handleStopRecording}
-        />
+        {language === 'zh' ? (
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <input
+              type="text"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleTextSubmit() }}
+              placeholder="输入中文或英文..."
+              disabled={isProcessing}
+              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 disabled:opacity-50"
+            />
+            <button
+              onClick={handleTextSubmit}
+              disabled={isProcessing || !textInput.trim()}
+              className="bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 rounded-full p-2 transition-colors"
+            >
+              <svg className="w-4 h-4 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        ) : (
+          <VoiceRecorder
+            isRecording={isRecording}
+            isProcessing={isProcessing}
+            onStart={handleStartRecording}
+            onStop={handleStopRecording}
+          />
+        )}
       </div>
     </div>
   )
