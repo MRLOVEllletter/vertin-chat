@@ -51,7 +51,7 @@ export function Sidebar({
   return (
     <aside className="w-64 border-r border-zinc-800 flex flex-col h-full bg-zinc-900/50">
       <div className="p-3 border-b border-zinc-800">
-        <h2 className="text-xs font-semibold text-zinc-500 uppercase mb-2">Bots</h2>
+        <h2 className="text-xs font-semibold text-zinc-500 uppercase mb-2">角色</h2>
         {bots.map((b) => (
           <button
             key={b.id}
@@ -66,14 +66,14 @@ export function Sidebar({
           onClick={() => navigate('/bots')}
           className="w-full text-left px-2 py-1.5 rounded text-xs text-zinc-500 hover:text-zinc-300 transition-colors mt-1"
         >
-          + Manage Bots
+          + 管理角色
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        <h2 className="text-xs font-semibold text-zinc-500 uppercase mb-2">Conversations</h2>
+        <h2 className="text-xs font-semibold text-zinc-500 uppercase mb-2">对话记录</h2>
         {convs.length === 0 && (
-          <p className="text-xs text-zinc-600">No conversations yet</p>
+          <p className="text-xs text-zinc-600">暂无对话</p>
         )}
         {convs.map((c) => (
           <div

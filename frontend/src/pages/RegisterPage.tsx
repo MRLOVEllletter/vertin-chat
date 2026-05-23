@@ -19,7 +19,7 @@ export function RegisterPage() {
       return
     }
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError('密码至少需要6位')
       return
     }
     setLoading(true)
@@ -36,36 +36,39 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
       <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
-        <h1 className="text-xl font-bold text-white mb-6">Create Account</h1>
+        <h1 className="text-xl font-bold text-white mb-6">创建账号</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Email</label>
+            <label className="block text-sm text-zinc-400 mb-1">邮箱</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700 focus:border-blue-500 outline-none"
               required
+              placeholder="your@email.com"
             />
           </div>
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Password</label>
+            <label className="block text-sm text-zinc-400 mb-1">密码</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700 focus:border-blue-500 outline-none"
               required
+              placeholder="至少6位"
             />
           </div>
           <div>
-            <label className="block text-sm text-zinc-400 mb-1">Confirm Password</label>
+            <label className="block text-sm text-zinc-400 mb-1">确认密码</label>
             <input
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700 focus:border-blue-500 outline-none"
               required
+              placeholder="再次输入密码"
             />
           </div>
           {error && <p className="text-red-400 text-xs">{error}</p>}
@@ -74,13 +77,13 @@ export function RegisterPage() {
             disabled={loading}
             className="w-full bg-blue-600 text-white rounded-lg py-2 text-sm font-medium hover:bg-blue-500 disabled:opacity-50"
           >
-            {loading ? 'Creating...' : 'Create Account'}
+            {loading ? '注册中...' : '注册'}
           </button>
         </form>
         <p className="text-zinc-500 text-xs mt-4 text-center">
-          Already have an account?{' '}
+          已有账号？{' '}
           <Link to="/login" className="text-blue-400 hover:underline">
-            Sign in
+            去登录
           </Link>
         </p>
       </div>

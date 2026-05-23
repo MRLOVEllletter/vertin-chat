@@ -52,13 +52,13 @@ function MainLayout() {
             onClick={() => setShowSettings(!showSettings)}
             className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
           >
-            {showSettings ? 'Close' : 'Settings'}
+            {showSettings ? '关闭设置' : '设置'}
           </button>
           <button
             onClick={logout}
             className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            Logout
+            退出登录
           </button>
         </div>
       </header>
