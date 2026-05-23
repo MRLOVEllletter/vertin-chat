@@ -41,9 +41,9 @@ async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[st
         "smart_format": "true",
         "language": language,
     }
-    # keyterm is only supported for English models on Nova-2/Nova-3
+    # keywords is supported across models; only apply for English
     if language == "en":
-        params["keyterm"] = "Vertin:0.7"
+        params["keywords"] = "Vertin:0.7"
 
     t0 = time.time()
     async with httpx.AsyncClient(timeout=30) as client:
