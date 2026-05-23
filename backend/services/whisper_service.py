@@ -42,7 +42,7 @@ async def transcribe_deepgram(audio_path: str) -> tuple[str, str, int]:
                 "model": settings.deepgram_model,
                 "smart_format": "true",
                 "language": "en",
-                "keyterm": "Vertin:1.0",
+                "keyterm": "Vertin:0.7",
             },
             headers={"Authorization": f"Token {settings.deepgram_api_key}", "Content-Type": "audio/wav"},
             content=audio_bytes,
