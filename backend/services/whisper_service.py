@@ -67,5 +67,7 @@ async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[st
 
 async def transcribe(audio_path: str, language: str = "en") -> tuple[str, str, int]:
     if settings.stt_provider == "deepgram" and settings.deepgram_api_key:
+        print(f"[STT] provider=deepgram lang={language}", flush=True)
         return await transcribe_deepgram(audio_path, language)
+    print(f"[STT] provider=whisper lang={language}", flush=True)
     return await transcribe_whisper(audio_path)
