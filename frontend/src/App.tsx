@@ -28,26 +28,41 @@ function MainLayout() {
   const [difficulty, setDifficulty] = useState('intermediate')
   const [showSettings, setShowSettings] = useState(false)
   const [activeConvId, setActiveConvId] = useState<number | null>(null)
-  const [convBotId, setConvBotId] = useState<number>(1) // default Vertin bot
+  const [convBotId, setConvBotId] = useState<number>(1)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, logout } = useAuth()
 
   const handleSelectConv = useCallback((id: number) => {
     setActiveConvId(id)
+    setSidebarOpen(false)
   }, [])
 
   const handleNewConv = useCallback((botId: number) => {
     setActiveConvId(null)
     setConvBotId(botId)
+    setSidebarOpen(false)
   }, [])
+
+  const closeSidebar = useCallback(() => setSidebarOpen(false), [])
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
-      <header className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <h1 className="text-lg font-semibold text-zinc-100">Vertin · English Tutor</h1>
-          <span className="text-xs text-zinc-500">{user?.email}</span>
+      {/* Header */}
+      <header className="border-b border-zinc-800 px-3 md:px-4 py-2 md:py-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 md:gap-3">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="md:hidden p-1 -ml-1 text-zinc-400 hover:text-zinc-200"
+            aria-label="Open menu"
+          >
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <h1 className="text-base md:text-lg font-semibold text-zinc-100">Vertin · English Tutor</h1>
+          <span className="hidden sm:inline text-xs text-zinc-500">{user?.email}</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <button
             onClick={() => setShowSettings(!showSettings)}
             className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
@@ -63,16 +78,41 @@ function MainLayout() {
         </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden">
-        <Sidebar
-          activeConvId={activeConvId}
-          activeBotId={convBotId}
-          onSelectConv={handleSelectConv}
-          onNewConv={handleNewConv}
-        />
+      <main className="flex-1 flex overflow-hidden relative">
+        {/* Desktop sidebar — always visible */}
+        <div className="hidden md:block w-64 shrink-0">
+          <Sidebar
+            activeConvId={activeConvId}
+            activeBotId={convBotId}
+            onSelectConv={handleSelectConv}
+            onNewConv={handleNewConv}
+          />
+        </div>
+
+        {/* Mobile sidebar — slide-in overlay */}
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-50">
+            <div
+              className="absolute inset-0 bg-black/50"
+              onClick={closeSidebar}
+            />
+            <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] animate-slide-in">
+              <Sidebar
+                activeConvId={activeConvId}
+                activeBotId={convBotId}
+                onSelectConv={handleSelectConv}
+                onNewConv={handleNewConv}
+                onClose={closeSidebar}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Main content area */}
         <div className="flex-1 flex overflow-hidden">
+          {/* Desktop settings — inline aside */}
           {showSettings && (
-            <aside className="w-80 border-r border-zinc-800 p-4 overflow-y-auto shrink-0">
+            <aside className="hidden md:block w-80 border-r border-zinc-800 p-4 overflow-y-auto shrink-0">
               <RoleSettings
                 systemPrompt={systemPrompt}
                 difficulty={difficulty}
@@ -81,6 +121,30 @@ function MainLayout() {
               />
             </aside>
           )}
+
+          {/* Mobile settings — fullscreen overlay */}
+          {showSettings && (
+            <div className="md:hidden fixed inset-0 z-50 bg-zinc-950 flex flex-col">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
+                <h2 className="text-lg font-semibold text-zinc-100">设置</h2>
+                <button
+                  onClick={() => setShowSettings(false)}
+                  className="text-sm text-zinc-400 hover:text-zinc-200 p-1"
+                >
+                  关闭
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <RoleSettings
+                  systemPrompt={systemPrompt}
+                  difficulty={difficulty}
+                  onPromptChange={setSystemPrompt}
+                  onDifficultyChange={setDifficulty}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="flex-1 overflow-auto">
             <Outlet context={{ activeConvId, convBotId, systemPrompt, difficulty }} />
           </div>

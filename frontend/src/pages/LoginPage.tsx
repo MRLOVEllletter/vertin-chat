@@ -25,8 +25,8 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-      <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-6 border border-zinc-800">
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+      <div className="w-full max-w-sm bg-zinc-900 rounded-2xl p-5 md:p-6 border border-zinc-800">
         <h1 className="text-xl font-bold text-white mb-6">Vertin · 英语陪练</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

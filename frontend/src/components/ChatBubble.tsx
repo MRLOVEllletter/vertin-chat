@@ -13,7 +13,7 @@ export function ChatBubble({ role, content, onPlay, isPlaying }: ChatBubbleProps
     <div className={clsx('flex', isUser ? 'justify-end' : 'justify-start')}>
       <div
         className={clsx(
-          'max-w-[75%] rounded-2xl px-4 py-3',
+          'max-w-[80%] md:max-w-[75%] rounded-2xl px-3 md:px-4 py-2.5 md:py-3',
           isUser
             ? 'bg-blue-600 text-white rounded-br-sm'
             : 'bg-zinc-800 text-zinc-100 rounded-bl-sm',

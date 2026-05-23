@@ -23,11 +23,13 @@ export function Sidebar({
   activeBotId,
   onSelectConv,
   onNewConv,
+  onClose,
 }: {
   activeConvId: number | null
   activeBotId: number
   onSelectConv: (id: number) => void
   onNewConv: (botId: number) => void
+  onClose?: () => void
 }) {
   const [bots, setBots] = useState<Bot[]>([])
   const [convs, setConvs] = useState<Conv[]>([])
@@ -51,9 +53,18 @@ export function Sidebar({
   }
 
   return (
-    <aside className="w-64 border-r border-zinc-800 flex flex-col h-full bg-zinc-900/50">
+    <aside className="w-full border-r border-zinc-800 flex flex-col h-full bg-zinc-900/50">
       <div className="p-3 border-b border-zinc-800">
-        <h2 className="text-xs font-semibold text-zinc-500 uppercase mb-2">角色</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-xs font-semibold text-zinc-500 uppercase">角色</h2>
+          {onClose && (
+            <button onClick={onClose} className="md:hidden text-zinc-400 hover:text-zinc-200 p-1">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
         {bots.map((b) => (
           <button
             key={b.id}

@@ -178,7 +178,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-zinc-500 mt-20">
             <p className="text-lg">和 {botName} 开始对话</p>
@@ -210,10 +210,10 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-zinc-800 p-4 flex justify-center items-center gap-4">
+      <div className="border-t border-zinc-800 p-3 md:p-4 pb-safe flex justify-center items-center gap-3 md:gap-4">
         <button
           onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          className={`px-2.5 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-medium transition-colors ${
             language === 'zh' ? 'bg-red-600/20 text-red-300 border border-red-600/40' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
           }`}
         >
