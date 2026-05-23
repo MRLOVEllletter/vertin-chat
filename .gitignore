@@ -12,3 +12,5 @@ Vertin_model/
 *.pth
 GPT-SoVITS/
 test_vertin.wav
+frontend/dist/
+*.wav

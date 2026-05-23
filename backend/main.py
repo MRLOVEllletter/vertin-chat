@@ -1,9 +1,7 @@
 import asyncio
 import os
-from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.api import stt, chat, tts, stream
@@ -11,7 +9,7 @@ from backend.api import config as config_api
 from backend.api import history as history_api
 from backend.services.whisper_service import get_whisper_model
 
-app = FastAPI(title="Vertin English Tutor", version="0.1.0")
+app = FastAPI(title="Vertin English Tutor", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,10 +27,6 @@ app.include_router(tts.router, prefix="/api")
 app.include_router(stream.router, prefix="/api")
 app.include_router(config_api.router, prefix="/api")
 app.include_router(history_api.router, prefix="/api")
-
-# Serve production frontend build
-FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
-app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
 
 @app.on_event("startup")
 async def preload_models():
