@@ -5,7 +5,7 @@ import uuid
 from fastapi import APIRouter, WebSocket
 from backend.config import settings
 from backend.services.whisper_service import transcribe
-from backend.services.deepseek_service import chat as deepseek_chat
+from backend.services.llm_service import chat as llm_chat
 from backend.services.tts_service import synthesize
 
 router = APIRouter()
@@ -40,7 +40,7 @@ async def chat_stream(websocket: WebSocket):
                         f.write(bytes(data["data"]))
                     await websocket.send_text(json.dumps({"type": "stt_start"}))
 
-                    text, lang, stt_ms = await asyncio.to_thread(transcribe, temp_path)
+                    text, lang, stt_ms = await transcribe(temp_path)
                     await websocket.send_text(json.dumps({
                         "type": "stt_result",
                         "text": text,
@@ -48,7 +48,7 @@ async def chat_stream(websocket: WebSocket):
                     }))
 
                     reply, usage = await asyncio.to_thread(
-                        deepseek_chat,
+                        llm_chat,
                         user_message=text,
                         history=history,
                         system_prompt=system_prompt,

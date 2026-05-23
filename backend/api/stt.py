@@ -15,7 +15,7 @@ async def speech_to_text(file: UploadFile = File(...)):
     with open(temp_path, "wb") as f:
         f.write(await file.read())
     try:
-        text, lang, duration_ms = transcribe(temp_path)
+        text, lang, duration_ms = await transcribe(temp_path)
         return STTResponse(text=text, language=lang, duration_ms=duration_ms)
     finally:
         os.remove(temp_path)

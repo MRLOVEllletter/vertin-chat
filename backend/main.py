@@ -1,7 +1,9 @@
 import asyncio
 import os
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.api import stt, chat, tts, stream
@@ -28,6 +30,9 @@ app.include_router(stream.router, prefix="/api")
 app.include_router(config_api.router, prefix="/api")
 app.include_router(history_api.router, prefix="/api")
 
+# Serve production frontend build
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+app.mount("/", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="frontend")
 
 @app.on_event("startup")
 async def preload_models():
