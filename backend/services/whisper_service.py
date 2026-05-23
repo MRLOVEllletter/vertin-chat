@@ -34,28 +34,34 @@ async def transcribe_deepgram(audio_path: str, language: str = "en") -> tuple[st
     with open(audio_path, "rb") as f:
         audio_bytes = f.read()
 
-    print(f"[STT] lang={language} audio_bytes={len(audio_bytes)}")
+    print(f"[STT] lang={language} audio_bytes={len(audio_bytes)}", flush=True)
+
+    params = {
+        "model": settings.deepgram_model,
+        "smart_format": "true",
+        "language": language,
+    }
+    # keyterm is only supported for English models on Nova-2/Nova-3
+    if language == "en":
+        params["keyterm"] = "Vertin:0.7"
 
     t0 = time.time()
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "https://api.deepgram.com/v1/listen",
-            params={
-                "model": settings.deepgram_model,
-                "smart_format": "true",
-                "language": language,
-                "keyterm": "Vertin:0.7",
-            },
+            params=params,
             headers={"Authorization": f"Token {settings.deepgram_api_key}", "Content-Type": "audio/wav"},
             content=audio_bytes,
         )
-        print(f"[STT] status={resp.status_code}")
+        print(f"[STT] status={resp.status_code}", flush=True)
+        if resp.status_code != 200:
+            print(f"[STT] error_body={resp.text[:500]}", flush=True)
         resp.raise_for_status()
         data = resp.json()
         duration_ms = int((time.time() - t0) * 1000)
         text = data["results"]["channels"][0]["alternatives"][0]["transcript"]
-        detected_lang = data["results"]["channels"][0].get("detected_language", "en")
-        print(f"[STT] text='{text[:80]}' lang={detected_lang}")
+        detected_lang = data["results"]["channels"][0].get("detected_language", language)
+        print(f"[STT] text='{text[:80]}' lang={detected_lang}", flush=True)
         return text, detected_lang, duration_ms
 
 
