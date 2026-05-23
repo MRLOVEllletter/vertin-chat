@@ -38,7 +38,12 @@ async def transcribe_deepgram(audio_path: str) -> tuple[str, str, int]:
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
             "https://api.deepgram.com/v1/listen",
-            params={"model": settings.deepgram_model, "smart_format": "true", "language": "en"},
+            params={
+                "model": settings.deepgram_model,
+                "smart_format": "true",
+                "language": "en",
+                "keyterm": "Vertin:1.0",
+            },
             headers={"Authorization": f"Token {settings.deepgram_api_key}", "Content-Type": "audio/wav"},
             content=audio_bytes,
         )
