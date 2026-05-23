@@ -21,6 +21,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
   const [isProcessing, setIsProcessing] = useState(false)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
   const [botPrompt, setBotPrompt] = useState('')
+  const [botName, setBotName] = useState('Vertin')
   const [currentConvId, setCurrentConvId] = useState<number | null>(convId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder()
@@ -35,7 +36,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
         if (res.ok) {
           const bots = await res.json()
           const bot = bots.find((b: any) => b.id === ctx.convBotId)
-          if (bot) setBotPrompt(bot.system_prompt)
+          if (bot) { setBotPrompt(bot.system_prompt); setBotName(bot.name) }
         }
       })
       return
@@ -55,7 +56,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
         if (bres.ok) {
           const bots = await bres.json()
           const bot = bots.find((b: any) => b.id === data.bot_id)
-          if (bot) setBotPrompt(bot.system_prompt)
+          if (bot) { setBotPrompt(bot.system_prompt); setBotName(bot.name) }
         }
       }
     })
@@ -160,8 +161,8 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-zinc-500 mt-20">
-            <p className="text-lg">Press and hold the mic to start speaking</p>
-            <p className="text-sm mt-2">I'll help you practice English conversation</p>
+            <p className="text-lg">和 {botName} 开始对话</p>
+            <p className="text-sm mt-2">按住麦克风开始说话</p>
           </div>
         )}
         {messages.map((msg, i) => (

@@ -20,10 +20,12 @@ interface Conv {
 
 export function Sidebar({
   activeConvId,
+  activeBotId,
   onSelectConv,
   onNewConv,
 }: {
   activeConvId: number | null
+  activeBotId: number
   onSelectConv: (id: number) => void
   onNewConv: (botId: number) => void
 }) {
@@ -56,7 +58,11 @@ export function Sidebar({
           <button
             key={b.id}
             onClick={() => onNewConv(b.id)}
-            className="w-full text-left px-2 py-1.5 rounded text-sm text-zinc-300 hover:bg-zinc-800 transition-colors"
+            className={`w-full text-left px-2 py-1.5 rounded text-sm transition-colors ${
+              activeBotId === b.id && activeConvId === null
+                ? 'bg-blue-600/20 text-blue-300'
+                : 'text-zinc-300 hover:bg-zinc-800'
+            }`}
           >
             {b.name}
             {b.is_default && <span className="text-xs text-zinc-500 ml-1">· default</span>}

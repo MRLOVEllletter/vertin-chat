@@ -66,6 +66,7 @@ function MainLayout() {
       <main className="flex-1 flex overflow-hidden">
         <Sidebar
           activeConvId={activeConvId}
+          activeBotId={convBotId}
           onSelectConv={handleSelectConv}
           onNewConv={handleNewConv}
         />
