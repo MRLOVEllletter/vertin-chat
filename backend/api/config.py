@@ -5,7 +5,7 @@ from backend.config import settings
 from backend.models.schemas import ConfigUpdate
 
 router = APIRouter()
-CONFIG_FILE = os.path.join(settings.history_dir, "app_config.json")
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "app_config.json")
 
 
 def _load_config() -> dict:

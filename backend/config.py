@@ -30,9 +30,18 @@ class Settings(BaseSettings):
     # Legacy (unused with Fish Audio)
     gpt_sovits_url: str = "http://localhost:9880"
 
+    # Auth
+    jwt_secret: str = "change-me-to-a-random-string-in-production"
+    jwt_expire_days: int = 30
+
+    # Database
+    database_path: str = "backend/data/vertin.db"
+
+    # Limits
+    max_bots_per_user: int = 20
+
     # Misc
     stt_temp_dir: str = "temp_audio"
-    history_dir: str = "conversation_history"
     max_history: int = 50
 
     class Config:

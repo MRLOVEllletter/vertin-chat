@@ -1,21 +1,65 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useOutletContext } from 'react-router-dom'
 import { ChatBubble } from '../components/ChatBubble'
 import { VoiceRecorder } from '../components/VoiceRecorder'
 import { useAudioRecorder } from '../hooks/useAudioRecorder'
-import { transcribeAudio, chatWithAI, synthesizeTTS } from '../api'
+import { api, transcribeAudio, chatWithAI, synthesizeTTS } from '../api'
 import type { Message } from '../types'
 
-interface ChatPageProps {
+interface LayoutContext {
+  activeConvId: number | null
+  convBotId: number
   systemPrompt: string
   difficulty: string
 }
 
-export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
+export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPrompt: string; difficulty: string }) {
+  const ctx = useOutletContext<LayoutContext>()
+  const convId = ctx.activeConvId
+
   const [messages, setMessages] = useState<Message[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
+  const [botPrompt, setBotPrompt] = useState('')
+  const [currentConvId, setCurrentConvId] = useState<number | null>(convId)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder()
+
+  // Load conversation messages when convId changes
+  useEffect(() => {
+    if (!convId) {
+      setMessages([])
+      setCurrentConvId(null)
+      // Load bot prompt for new conversations
+      api.fetch(`/api/bots`).then(async (res) => {
+        if (res.ok) {
+          const bots = await res.json()
+          const bot = bots.find((b: any) => b.id === ctx.convBotId)
+          if (bot) setBotPrompt(bot.system_prompt)
+        }
+      })
+      return
+    }
+    setCurrentConvId(convId)
+    api.fetch(`/api/conversations/${convId}`).then(async (res) => {
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(data.messages.map((m: any) => ({
+          role: m.role,
+          content: m.content,
+          audioBase64: m.audio_base64,
+        })))
+        setBotPrompt('') // will be loaded from bot
+        // Get bot prompt
+        const bres = await api.fetch('/api/bots')
+        if (bres.ok) {
+          const bots = await bres.json()
+          const bot = bots.find((b: any) => b.id === data.bot_id)
+          if (bot) setBotPrompt(bot.system_prompt)
+        }
+      }
+    })
+  }, [convId, ctx.convBotId])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -39,31 +83,62 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
     stopRecording()
   }, [stopRecording])
 
+  // Save a message to the current conversation
+  const saveMessage = async (conv: number, role: string, content: string, audioB64?: string) => {
+    await api.fetch(`/api/conversations/${conv}/messages`, {
+      method: 'POST',
+      body: JSON.stringify({ role, content, audio_base64: audioB64 || null }),
+    })
+  }
+
   // Process audio when blob is available after recording stops
   useEffect(() => {
     if (!audioBlob || isRecording || isProcessing) return
 
     const processAudio = async () => {
       setIsProcessing(true)
+      let conv = currentConvId
+
       try {
         // 1. STT
         const sttResult = await transcribeAudio(audioBlob)
         const userText = sttResult.text
+
+        // 2. Create conversation if needed
+        if (!conv) {
+          const cres = await api.fetch('/api/conversations', {
+            method: 'POST',
+            body: JSON.stringify({ bot_id: ctx.convBotId, title: userText.slice(0, 50) }),
+          })
+          if (cres.ok) {
+            const cdata = await cres.json()
+            conv = cdata.id
+            setCurrentConvId(conv)
+          }
+        }
+
+        // Persist user message
+        if (conv) await saveMessage(conv, 'user', userText).catch(() => {})
+
         setMessages((prev) => [...prev, { role: 'user', content: userText }])
 
-        // 2. Chat — build history including the just-added user message
-        const history = [
-          ...messages.map((m) => ({ role: m.role, content: m.content })),
-          { role: 'user', content: userText },
-        ]
+        // 3. Chat
+        const history = messages.map((m) => ({ role: m.role, content: m.content }))
+        history.push({ role: 'user', content: userText })
+
         const chatResult = await chatWithAI(userText, history, {
-          systemPrompt,
-          difficulty,
+          systemPrompt: botPrompt || undefined,
+          difficulty: 'intermediate',
+          conversationId: conv || undefined,
         })
         const reply = chatResult.reply
 
-        // 3. TTS - get audio file URL from backend
+        // 4. TTS
         const ttsResult = await synthesizeTTS(reply)
+
+        // Persist assistant message
+        if (conv) await saveMessage(conv, 'assistant', reply, ttsResult.audio_url).catch(() => {})
+
         setMessages((prev) => [...prev, {
           role: 'assistant',
           content: reply,
@@ -85,8 +160,8 @@ export function ChatPage({ systemPrompt, difficulty }: ChatPageProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 && (
           <div className="text-center text-zinc-500 mt-20">
-            <p className="text-lg">按住麦克风开始说话</p>
-            <p className="text-sm mt-2">我来帮你练习英语口语</p>
+            <p className="text-lg">Press and hold the mic to start speaking</p>
+            <p className="text-sm mt-2">I'll help you practice English conversation</p>
           </div>
         )}
         {messages.map((msg, i) => (
