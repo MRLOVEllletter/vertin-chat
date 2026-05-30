@@ -50,7 +50,7 @@ export function BotManagePage() {
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Delete this bot and all its conversations?')) return
+    if (!confirm('Delete this bot and all related conversations?')) return
     await api.fetch(`/api/bots/${id}`, { method: 'DELETE' })
     load()
   }
@@ -64,84 +64,107 @@ export function BotManagePage() {
 
   return (
     <div className="max-w-2xl mx-auto p-4 md:p-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <button onClick={() => navigate('/')} className="text-sm text-zinc-400 hover:text-zinc-200">
-          ← Back
+        <button
+          onClick={() => navigate('/')}
+          className="font-body text-sm text-ink-pale hover:text-ink transition-colors flex items-center gap-1"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          返回
         </button>
         <button
           onClick={() => { setShowCreate(true); setEditId(null); setName(''); setPrompt(''); setError('') }}
-          className="bg-blue-600 text-white text-sm px-3 py-1.5 rounded-lg hover:bg-blue-500"
+          className="bg-navy text-cream-100 font-body text-sm px-4 py-1.5 rounded-sm hover:bg-navy-light transition-colors"
         >
-          + New Bot
+          + 新建角色
         </button>
       </div>
 
-      <h2 className="text-lg font-semibold text-white mb-4">My Bots</h2>
+      {/* Title */}
+      <div className="mb-6">
+        <h2 className="font-display text-xl text-navy tracking-wide">我的角色</h2>
+        <div className="w-8 h-0.5 bg-gold mt-2" />
+      </div>
 
+      {/* Bot list */}
       <div className="space-y-3">
         {bots.map((bot) => (
-          <div key={bot.id} className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+          <div
+            key={bot.id}
+            className="bg-paper px-4 py-3 rounded-sm"
+            style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+          >
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-white font-medium">
+              <h3 className="font-display text-sm text-navy tracking-wide">
                 {bot.name}
-                {bot.is_default && <span className="text-xs text-zinc-500 ml-2">(default)</span>}
+                {bot.is_default && <span className="font-body text-xs text-ink-pale/50 ml-2 italic">(默认)</span>}
               </h3>
               {!bot.is_default && (
-                <div className="flex gap-2">
-                  <button onClick={() => startEdit(bot)} className="text-xs text-zinc-400 hover:text-white">
-                    Edit
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => startEdit(bot)}
+                    className="font-body text-xs text-ink-pale hover:text-navy transition-colors"
+                  >
+                    编辑
                   </button>
-                  <button onClick={() => handleDelete(bot.id)} className="text-xs text-red-400 hover:text-red-300">
-                    Delete
+                  <button
+                    onClick={() => handleDelete(bot.id)}
+                    className="font-body text-xs text-ink-pale/50 hover:text-navy transition-colors"
+                  >
+                    删除
                   </button>
                 </div>
               )}
             </div>
-            <p className="text-sm text-zinc-500 line-clamp-2">{bot.system_prompt}</p>
+            <p className="font-body text-xs text-ink-pale/70 leading-relaxed line-clamp-2">{bot.system_prompt}</p>
           </div>
         ))}
       </div>
 
+      {/* Modal */}
       {showCreate && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 rounded-2xl p-6 w-full max-w-md border border-zinc-800">
-            <h3 className="text-lg font-semibold text-white mb-4">
-              {editId ? 'Edit Bot' : 'Create Bot'}
+        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <div className="bg-paper p-6 w-full max-w-md mx-4 rounded-sm" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
+            <h3 className="font-display text-base text-navy tracking-wide mb-5">
+              {editId ? '编辑角色' : '新建角色'}
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">Name</label>
+                <label className="block font-body text-xs text-ink-pale mb-1">名称</label>
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700 outline-none"
+                  className="w-full bg-cream-50 text-ink border border-cream-300 rounded-sm px-3 py-2 font-body text-sm focus:outline-none focus:border-navy-pale transition-colors placeholder:text-ink-pale/30"
                   maxLength={50}
-                  placeholder="My English Tutor"
+                  placeholder="角色名称"
                 />
               </div>
               <div>
-                <label className="block text-sm text-zinc-400 mb-1">System Prompt</label>
+                <label className="block font-body text-xs text-ink-pale mb-1">角色设定</label>
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="w-full bg-zinc-800 text-white rounded-lg px-3 py-2 text-sm border border-zinc-700 outline-none h-32 resize-none"
+                  className="w-full bg-cream-50 text-ink border border-cream-300 rounded-sm px-3 py-2 font-body text-sm focus:outline-none focus:border-navy-pale transition-colors h-32 resize-none placeholder:text-ink-pale/30"
                   maxLength={2000}
-                  placeholder="You are an English tutor who..."
+                  placeholder="输入 System Prompt..."
                 />
               </div>
-              {error && <p className="text-red-400 text-xs">{error}</p>}
-              <div className="flex gap-2 justify-end">
+              {error && <p className="font-body text-xs text-navy-pale">{error}</p>}
+              <div className="flex gap-2 justify-end pt-1">
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="px-4 py-2 text-sm text-zinc-400 hover:text-white"
+                  className="px-4 py-2 font-body text-sm text-ink-pale hover:text-ink transition-colors"
                 >
-                  Cancel
+                  取消
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="bg-blue-600 text-white px-4 py-2 text-sm rounded-lg hover:bg-blue-500"
+                  className="px-5 py-2 font-body text-sm text-cream-100 bg-navy hover:bg-navy-light rounded-sm transition-colors"
                 >
-                  {editId ? 'Save' : 'Create'}
+                  {editId ? '保存' : '创建'}
                 </button>
               </div>
             </div>

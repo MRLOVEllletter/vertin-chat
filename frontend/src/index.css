@@ -3,23 +3,38 @@
 @tailwind utilities;
 
 body {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Lora', Georgia, serif;
+  background-color: #F7F3EE;
+  color: #1C1C1C;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Safe area padding utilities for notched phones */
+/* Thin custom scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #D4CDC0;
+  border-radius: 2px;
+}
+
+/* Fade-in animation for messages */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out both;
+}
+
+/* Safe area */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-
 .pt-safe {
   padding-top: env(safe-area-inset-top, 0px);
-}
-
-@keyframes slide-in {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(0); }
-}
-
-.animate-slide-in {
-  animation: slide-in 0.2s ease-out;
 }

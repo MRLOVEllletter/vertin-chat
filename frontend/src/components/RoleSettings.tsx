@@ -13,15 +13,15 @@ const PRESETS = [
 
 export function RoleSettings({ systemPrompt, difficulty, onPromptChange, onDifficultyChange }: RoleSettingsProps) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
-        <h3 className="text-sm font-medium text-zinc-300 mb-2">预设角色</h3>
-        <div className="space-y-1">
+        <h3 className="font-body text-xs text-ink-pale uppercase tracking-widest mb-2">预设角色</h3>
+        <div className="space-y-0.5">
           {PRESETS.map((p) => (
             <button
               key={p.name}
               onClick={() => onPromptChange(p.prompt)}
-              className="block w-full text-left text-xs text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded px-2 py-1.5 transition-colors"
+              className="block w-full text-left font-body text-sm text-ink-pale hover:text-ink hover:bg-cream-300/50 rounded-sm px-3 py-2 transition-colors"
             >
               {p.name}
             </button>
@@ -29,12 +29,14 @@ export function RoleSettings({ systemPrompt, difficulty, onPromptChange, onDiffi
         </div>
       </div>
 
+      <hr className="border-cream-300" />
+
       <div>
-        <h3 className="text-sm font-medium text-zinc-300 mb-2">难度</h3>
+        <h3 className="font-body text-xs text-ink-pale uppercase tracking-widest mb-2">难度</h3>
         <select
           value={difficulty}
           onChange={(e) => onDifficultyChange(e.target.value)}
-          className="w-full bg-zinc-800 text-zinc-200 rounded px-3 py-2 text-sm border border-zinc-700"
+          className="w-full bg-paper text-ink border border-cream-300 rounded-sm px-3 py-2 font-body text-sm focus:outline-none focus:border-navy-pale transition-colors"
         >
           <option value="beginner">初级</option>
           <option value="intermediate">中级</option>
@@ -42,13 +44,15 @@ export function RoleSettings({ systemPrompt, difficulty, onPromptChange, onDiffi
         </select>
       </div>
 
+      <hr className="border-cream-300" />
+
       <div>
-        <h3 className="text-sm font-medium text-zinc-300 mb-2">角色设定 / System Prompt</h3>
+        <h3 className="font-body text-xs text-ink-pale uppercase tracking-widest mb-2">角色设定</h3>
         <textarea
           value={systemPrompt}
           onChange={(e) => onPromptChange(e.target.value)}
           rows={12}
-          className="w-full bg-zinc-800 text-zinc-200 rounded px-3 py-2 text-xs border border-zinc-700 resize-none font-mono"
+          className="w-full bg-paper text-ink border border-cream-300 rounded-sm px-3 py-2 font-body text-sm focus:outline-none focus:border-navy-pale transition-colors resize-none leading-relaxed"
         />
       </div>
     </div>

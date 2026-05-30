@@ -22,18 +22,16 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
   const [language, setLanguage] = useState<'en' | 'zh'>('en')
   const [botPrompt, setBotPrompt] = useState('')
-  const [botName, setBotName] = useState('Vertin')
+  const [, setBotName] = useState('Vertin')
   const [currentConvId, setCurrentConvId] = useState<number | null>(convId)
   const [textInput, setTextInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder()
 
-  // Load conversation messages when convId changes
   useEffect(() => {
     if (!convId) {
       setMessages([])
       setCurrentConvId(null)
-      // Load bot prompt for new conversations
       api.fetch(`/api/bots`).then(async (res) => {
         if (res.ok) {
           const bots = await res.json()
@@ -52,8 +50,7 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
           content: m.content,
           audioBase64: m.audio_base64,
         })))
-        setBotPrompt('') // will be loaded from bot
-        // Get bot prompt
+        setBotPrompt('')
         const bres = await api.fetch('/api/bots')
         if (bres.ok) {
           const bots = await bres.json()
@@ -86,7 +83,6 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
     stopRecording()
   }, [stopRecording])
 
-  // Save a message to the current conversation
   const saveMessage = async (conv: number, role: string, content: string, audioB64?: string) => {
     await api.fetch(`/api/conversations/${conv}/messages`, {
       method: 'POST',
@@ -94,13 +90,11 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
     })
   }
 
-  // Shared logic: send user text through LLM → TTS, persist messages
   const processUserInput = useCallback(async (userText: string) => {
     setIsProcessing(true)
     let conv = currentConvId
 
     try {
-      // Create conversation if needed
       if (!conv) {
         const cres = await api.fetch('/api/conversations', {
           method: 'POST',
@@ -117,7 +111,6 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
 
       setMessages((prev) => [...prev, { role: 'user', content: userText }])
 
-      // Chat
       const history = messages.map((m) => ({ role: m.role, content: m.content }))
       history.push({ role: 'user', content: userText })
 
@@ -128,7 +121,6 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
       })
       const reply = chatResult.reply
 
-      // TTS
       const ttsResult = await synthesizeTTS(reply)
 
       if (conv) await saveMessage(conv, 'assistant', reply, ttsResult.audio_url).catch(() => {})
@@ -145,7 +137,6 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
     }
   }, [currentConvId, ctx.convBotId, messages, botPrompt])
 
-  // Process audio when blob is available after recording stops (English mode)
   useEffect(() => {
     if (!audioBlob || isRecording || isProcessing) return
 
@@ -164,11 +155,9 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
         clearAudio()
       }
     }
-
     processAudio()
-  }, [audioBlob, isRecording, isProcessing])  // eslint-disable-line react-hooks/exhaustive-deps
+  }, [audioBlob, isRecording, isProcessing]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Text input submit (Chinese mode)
   const handleTextSubmit = useCallback(async () => {
     const text = textInput.trim()
     if (!text || isProcessing) return
@@ -178,15 +167,18 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-6 space-y-5 scrollbar-thin">
         {messages.length === 0 && (
-          <div className="text-center text-zinc-500 mt-20">
-            <p className="text-lg">和 {botName} 开始对话</p>
-            <p className="text-sm mt-2">
-              {language === 'zh' ? '输入文字并发送' : '按住麦克风开始说话'}
+          <div className="flex flex-col items-center justify-center mt-20 text-center">
+            <p className="font-display text-lg text-ink-pale/60 italic">开始一段对话</p>
+            <div className="w-12 h-px bg-cream-300 mt-4 mb-3" />
+            <p className="font-body text-sm text-ink-pale/40">
+              {language === 'zh' ? '输入文字开始' : '按住说话'}
             </p>
           </div>
         )}
+
         {messages.map((msg, i) => (
           <ChatBubble
             key={i}
@@ -196,58 +188,66 @@ export function ChatPage({ systemPrompt: _sp, difficulty: _diff }: { systemPromp
             isPlaying={playingIndex === i}
           />
         ))}
+
         {isProcessing && (
           <div className="flex justify-start">
-            <div className="bg-zinc-800 rounded-2xl rounded-bl-sm px-4 py-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" />
-                <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-100" />
-                <div className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce delay-200" />
+            <div className="bg-paper px-4 py-3 rounded-sm border-l-[3px] border-gold" style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+              <div className="flex gap-1.5">
+                <div className="w-2 h-2 bg-gold/40 rounded-full animate-bounce" />
+                <div className="w-2 h-2 bg-gold/40 rounded-full animate-bounce" style={{ animationDelay: '0.15s' }} />
+                <div className="w-2 h-2 bg-gold/40 rounded-full animate-bounce" style={{ animationDelay: '0.3s' }} />
               </div>
             </div>
           </div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-zinc-800 p-3 md:p-4 pb-safe flex justify-center items-center gap-3 md:gap-4">
-        <button
-          onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
-          className={`px-2.5 md:px-3 py-1 md:py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            language === 'zh' ? 'bg-red-600/20 text-red-300 border border-red-600/40' : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
-          }`}
-        >
-          {language === 'en' ? 'EN' : '中文'}
-        </button>
-        {language === 'zh' ? (
-          <div className="flex items-center gap-2 flex-1 max-w-md">
-            <input
-              type="text"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleTextSubmit() }}
-              placeholder="输入中文或英文..."
-              disabled={isProcessing}
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-full px-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-500 disabled:opacity-50"
+      {/* Input bar */}
+      <div className="border-t border-cream-300 bg-cream-50 px-4 md:px-6 py-3 md:py-4 pb-safe">
+        <div className="max-w-2xl mx-auto flex items-center justify-center gap-3">
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')}
+            className={`font-body text-xs px-2.5 py-1.5 rounded-sm transition-colors ${
+              language === 'zh'
+                ? 'bg-navy text-cream-100'
+                : 'bg-paper text-ink-pale border border-cream-300 hover:border-navy-pale'
+            }`}
+          >
+            {language === 'en' ? 'EN' : '中文'}
+          </button>
+
+          {language === 'zh' ? (
+            <div className="flex items-center gap-2 flex-1 max-w-md">
+              <input
+                type="text"
+                value={textInput}
+                onChange={(e) => setTextInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleTextSubmit() }}
+                placeholder="输入消息..."
+                disabled={isProcessing}
+                className="flex-1 bg-paper text-ink border border-cream-300 rounded-sm px-4 py-2 font-body text-sm focus:outline-none focus:border-navy-pale transition-colors placeholder:text-ink-pale/30 disabled:opacity-50"
+              />
+              <button
+                onClick={handleTextSubmit}
+                disabled={isProcessing || !textInput.trim()}
+                className="bg-navy text-cream-100 rounded-sm p-2 hover:bg-navy-light transition-colors disabled:opacity-40"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          ) : (
+            <VoiceRecorder
+              isRecording={isRecording}
+              isProcessing={isProcessing}
+              onStart={handleStartRecording}
+              onStop={handleStopRecording}
             />
-            <button
-              onClick={handleTextSubmit}
-              disabled={isProcessing || !textInput.trim()}
-              className="bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 rounded-full p-2 transition-colors"
-            >
-              <svg className="w-4 h-4 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        ) : (
-          <VoiceRecorder
-            isRecording={isRecording}
-            isProcessing={isProcessing}
-            onStart={handleStartRecording}
-            onStop={handleStopRecording}
-          />
-        )}
+          )}
+        </div>
       </div>
     </div>
   )

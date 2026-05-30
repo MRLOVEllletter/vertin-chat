@@ -14,8 +14,8 @@ function ProtectedRoute() {
   const { user, isLoading } = useAuth()
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <p className="text-zinc-400">Loading...</p>
+      <div className="min-h-screen bg-cream-100 flex items-center justify-center">
+        <p className="font-body text-ink-pale text-lg">Loading...</p>
       </div>
     )
   }
@@ -46,41 +46,45 @@ function MainLayout() {
   const closeSidebar = useCallback(() => setSidebarOpen(false), [])
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex flex-col">
-      {/* Header */}
-      <header className="border-b border-zinc-800 px-3 md:px-4 py-2 md:py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 md:gap-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="md:hidden p-1 -ml-1 text-zinc-400 hover:text-zinc-200"
-            aria-label="Open menu"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <h1 className="text-base md:text-lg font-semibold text-zinc-100">Vertin · English Tutor</h1>
-          <span className="hidden sm:inline text-xs text-zinc-500">{user?.email}</span>
-        </div>
-        <div className="flex items-center gap-2 md:gap-3">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
-          >
-            {showSettings ? '关闭设置' : '设置'}
-          </button>
-          <button
-            onClick={logout}
-            className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
-          >
-            退出登录
-          </button>
+    <div className="h-screen flex flex-col bg-cream-100">
+      {/* ===== HEADER ===== */}
+      <header className="bg-paper border-b border-cream-300 shrink-0 z-30">
+        <div className="px-4 md:px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="md:hidden p-1 text-ink-pale hover:text-ink transition-colors"
+              aria-label="Open menu"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <h1 className="font-display text-lg md:text-xl text-navy tracking-wide">Vertin</h1>
+            <span className="hidden sm:inline font-body text-sm text-ink-pale">英语陪练</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline font-body text-xs text-ink-pale">{user?.email}</span>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="font-body text-sm text-navy-pale hover:text-navy transition-colors"
+            >
+              {showSettings ? '关闭' : '设置'}
+            </button>
+            <button
+              onClick={logout}
+              className="font-body text-sm text-ink-pale hover:text-ink transition-colors"
+            >
+              退出登录
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 flex overflow-hidden relative">
-        {/* Desktop sidebar — always visible */}
-        <div className="hidden md:block w-64 shrink-0">
+      {/* ===== MAIN ===== */}
+      <main className="flex-1 flex overflow-hidden">
+        {/* Desktop sidebar */}
+        <div className="hidden md:block w-64 shrink-0 border-r border-cream-300 bg-cream-200">
           <Sidebar
             activeConvId={activeConvId}
             activeBotId={convBotId}
@@ -89,39 +93,31 @@ function MainLayout() {
           />
         </div>
 
-        {/* Mobile sidebar — always rendered, toggled via CSS for reliable touch events */}
-        <div
-          className={`md:hidden fixed inset-0 z-50 transition-colors duration-200 ${
-            sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none'
-          }`}
-        >
-          <div
-            className={`absolute inset-0 bg-black/50 transition-opacity duration-200 ${
-              sidebarOpen ? 'opacity-100' : 'opacity-0'
-            }`}
-            onClick={closeSidebar}
-          />
-          <div
-            className={`absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] transition-transform duration-200 ease-out ${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
-            style={{ touchAction: 'manipulation' }}
-          >
-            <Sidebar
-              activeConvId={activeConvId}
-              activeBotId={convBotId}
-              onSelectConv={handleSelectConv}
-              onNewConv={handleNewConv}
-              onClose={closeSidebar}
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="md:hidden fixed inset-0 z-40">
+            <div
+              className="absolute inset-0 bg-black/30"
+              onClick={closeSidebar}
             />
+            <div className="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-cream-200 shadow-xl">
+              <Sidebar
+                activeConvId={activeConvId}
+                activeBotId={convBotId}
+                onSelectConv={handleSelectConv}
+                onNewConv={handleNewConv}
+                onClose={closeSidebar}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Main content area */}
+        {/* Content area + settings */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Desktop settings — inline aside */}
+          {/* Settings panel (desktop) */}
           {showSettings && (
-            <aside className="hidden md:block w-80 border-r border-zinc-800 p-4 overflow-y-auto shrink-0">
+            <aside className="hidden md:block w-80 border-r border-cream-300 bg-cream-200 p-5 overflow-y-auto shrink-0">
+              <h2 className="font-display text-sm text-navy tracking-wide mb-4">设置</h2>
               <RoleSettings
                 systemPrompt={systemPrompt}
                 difficulty={difficulty}
@@ -131,22 +127,19 @@ function MainLayout() {
             </aside>
           )}
 
-          {/* Mobile settings — always rendered, toggled via CSS */}
-          <div
-            className={`md:hidden fixed inset-0 z-50 bg-zinc-950 flex flex-col transition-opacity duration-200 ${
-              showSettings ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
-            }`}
-          >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 shrink-0">
-                <h2 className="text-lg font-semibold text-zinc-100">设置</h2>
+          {/* Settings overlay (mobile) */}
+          {showSettings && (
+            <div className="md:hidden fixed inset-0 z-50 bg-cream-100 flex flex-col">
+              <div className="bg-paper border-b border-cream-300 px-4 py-3 flex items-center justify-between">
+                <h2 className="font-display text-sm text-navy tracking-wide">设置</h2>
                 <button
                   onClick={() => setShowSettings(false)}
-                  className="text-sm text-zinc-400 hover:text-zinc-200 p-1"
+                  className="font-body text-sm text-ink-pale hover:text-ink"
                 >
                   关闭
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto p-5">
                 <RoleSettings
                   systemPrompt={systemPrompt}
                   difficulty={difficulty}
@@ -155,8 +148,10 @@ function MainLayout() {
                 />
               </div>
             </div>
+          )}
 
-          <div className="flex-1 overflow-auto">
+          {/* Page outlet */}
+          <div className="flex-1 overflow-auto bg-cream-100">
             <Outlet context={{ activeConvId, convBotId, systemPrompt, difficulty }} />
           </div>
         </div>
